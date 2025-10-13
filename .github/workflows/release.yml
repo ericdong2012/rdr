@@ -40,7 +40,7 @@ jobs:
         run: go mod vendor
 
       - name: Generate assets (go generate)
-        run: go generate ./...
+        run: GOFLAGS="-mod=mod" go generate ./...
 
       - name: Build
         env:
@@ -51,7 +51,7 @@ jobs:
           EXT=""
           if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
           OUT="rdr-${{ matrix.goos }}-${{ matrix.goarch }}${EXT}"
-          go build -ldflags "-s -w" -o "dist/${OUT}" .
+          GOFLAGS="-mod=mod" go build -ldflags "-s -w" -o "dist/${OUT}" .
 
       - name: Generate checksums
         run: |
