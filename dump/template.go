@@ -86,3 +86,21 @@ func ServeHTML(w http.ResponseWriter, layout string, content string, data map[st
 		log.Printf("|ERROR|ServeHTML LayoutTmplErr ERROR %v", tmplErr)
 	}
 }
+
+func RenderHTML(layout string, content string, data map[string]interface{}) ([]byte, error) {
+	var bodyBuf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&bodyBuf, content, data); err != nil {
+		return nil, err
+	}
+	bodyHTML := template.HTML(bodyBuf.String())
+	if len(data) == 0 {
+		data = map[string]interface{}{}
+	}
+	data["LayoutContent"] = bodyHTML
+
+	var outBuf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&outBuf, layout, data); err != nil {
+		return nil, err
+	}
+	return outBuf.Bytes(), nil
+}
