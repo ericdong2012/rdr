@@ -11,7 +11,7 @@ Requires Go 1.21+ (recommended to use the toolchain 1.23.2 as declared in `go.mo
 $ go install github.com/go-bindata/go-bindata/...@latest
 
 # 2) Download dependencies
-$ go mod download
+$ go mod tidy
 
 # 3) Generate embedded static assets and templates (MUST do)
 $ go generate ./...

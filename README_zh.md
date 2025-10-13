@@ -11,7 +11,7 @@ RDR（redis data reveal）是一个用于解析 Redis RDB 文件的工具。相�
 $ go install github.com/go-bindata/go-bindata/...@latest
 
 # 2) 拉取依赖
-$ go mod download
+$ go mod tidy 
 
 # 3) 生成内嵌静态资源与模板（必须执行）
 $ go generate ./...
