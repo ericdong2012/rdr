@@ -36,6 +36,9 @@ jobs:
       - name: Download deps
         run: go mod download
 
+      - name: Sync vendor
+        run: go mod vendor
+
       - name: Generate assets (go generate)
         run: go generate ./...
 
