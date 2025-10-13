@@ -36,6 +36,9 @@ jobs:
       - name: Download deps
         run: go mod download
 
+      - name: Tidy modules
+        run: go mod tidy
+
       - name: Sync vendor
         run: go mod vendor
 
