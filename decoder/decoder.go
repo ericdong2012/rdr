@@ -31,6 +31,7 @@ type Entry struct {
 	NumOfElem          uint64
 	LenOfLargestElem   uint64
 	FieldOfLargestElem string
+	ExpireAt           int64
 }
 
 // Decoder decode rdb file
@@ -41,7 +42,7 @@ type Decoder struct {
 	usedMem int64
 	ctime   int64
 	count   int
-	rdbVer int
+	rdbVer  int
 
 	currentInfo  *rdb.Info
 	currentEntry *Entry
@@ -110,6 +111,7 @@ func (d *Decoder) StartStream(key []byte, cardinality, expiry int64, info *rdb.I
 		Type:             "stream",
 		NumOfElem:        0,
 		LenOfLargestElem: 0,
+		ExpireAt:         expiry,
 	}
 }
 
@@ -147,6 +149,7 @@ func (d *Decoder) Set(key, value []byte, expiry int64, info *rdb.Info) {
 		Bytes:     bytes,
 		Type:      "string",
 		NumOfElem: d.m.ElemLen(value),
+		ExpireAt:  expiry,
 	}
 	d.Entries <- e
 }
@@ -172,6 +175,7 @@ func (d *Decoder) StartHash(key []byte, length, expiry int64, info *rdb.Info) {
 		Bytes:     bytes,
 		Type:      "hash",
 		NumOfElem: uint64(length),
+		ExpireAt:  expiry,
 	}
 }
 
@@ -248,6 +252,7 @@ func (d *Decoder) StartList(key []byte, length, expiry int64, info *rdb.Info) {
 		Bytes:     bytes,
 		Type:      "list",
 		NumOfElem: 0,
+		ExpireAt:  expiry,
 	}
 }
 
@@ -331,6 +336,7 @@ func (d *Decoder) StartZSet(key []byte, cardinality, expiry int64, info *rdb.Inf
 		Bytes:     bytes,
 		Type:      "sortedset",
 		NumOfElem: uint64(cardinality),
+		ExpireAt:  expiry,
 	}
 }
 

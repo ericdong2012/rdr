@@ -1,6 +1,11 @@
 # RDR: redis data reveal
 
-RDR (redis data reveal) is a tool to parse Redis RDB files. Compared with [redis-rdb-tools](https://github.com/sripathikrishnan/redis-rdb-tools), RDR is implemented in Go and runs much faster (on my PC, a 5GB RDB file takes about 2 minutes).
+> Acknowledgements & Notes: This project is a derivative work based on [xueqiu/rdr](https://github.com/xueqiu/rdr). Many thanks to the original authors and the community!
+> On top of it, we added an `export` command (supporting JSON/HTML) and extended the `keys` command (to include expiry, type, and size in bytes).
+
+👉 If you find this project helpful, please consider giving it a Star on GitHub!
+
+RDR (redis data reveal) is a tool to parse Redis RDB files. Compared with [redis-rdb-tools](https://github.com/sripathikrishnan/redis-rdb-tools), RDR is implemented in Go and runs much faster (on my PC, a 5GB RDB file takes less than 2 minutes).
 
 ## Build from Source (Windows / Linux)
 
@@ -107,6 +112,24 @@ Note: memory usage is approximate.
 
 ![show example](https://yqfile.alicdn.com/img_9bc93fc3a6b976fdf862c8314e34f454.png)
 
+### dump: print statistics to STDOUT (JSON array)
+
+```text
+NAME:
+   rdr dump - dump statistical information of rdbfile to STDOUT
+
+USAGE:
+   rdr dump FILE1 [FILE2] [FILE3]...
+```
+
+Quick example:
+
+```bash
+$ ./rdr dump a.rdb b.rdb > out/report.json
+```
+
+Note: When multiple RDB inputs are provided, the output is a JSON array; each element contains fields like `LargestKeys`, `LargestKeyPrefixes`, `TypeBytes/TypeNum`, `TotleNum/TotleBytes`, `LenLevelCount`, and `SlotBytes/SlotNums`.
+
 ### export: export statistics to local JSON or HTML
 
 ```text
@@ -119,6 +142,12 @@ USAGE:
 OPTIONS:
    --format value, -f value  export format: json or html (default: "json")
    --out value, -o value     output file path (single input) or directory (multiple inputs)
+```
+
+Quick example:
+
+```bash
+$ ./rdr export -f html -o out/report.html a.rdb b.rdb
 ```
 
 Examples and notes:
@@ -158,6 +187,18 @@ NAME:
 
 USAGE:
    rdr keys FILE1 [FILE2] [FILE3]...
+
+OPTIONS:
+   --with-expire, -e  When enabled, each line prints:
+                      key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>
+                      If there is no expiry, it prints:
+                      key, <type>, <size_in_bytes>,
+```
+
+Quick example:
+
+```bash
+$ ./rdr keys -e a.rdb b.rdb
 ```
 
 Example:
@@ -174,6 +215,33 @@ portfolio:stock_follower:ZH924804
 portfolio:stock_follower_count:INS104806
 ```
 
+With expiry output enabled (and including type and size_in_bytes):
+
+```bash
+# When the key has an expiry:
+$ ./rdr keys -e example.rdb | head -1
+EXPRESS_COMPANY_SCORE_TIME:Guangdong:Guangzhou:Huadu:Jilin:Siping, string, 920, 2025-11-27T18:23:50.752000
+
+# When the key has no expiry:
+$ ./rdr keys -e example.rdb | head -1
+some:key, string, 1234,
+```
+
+Multiple inputs:
+
+```bash
+$ ./rdr keys -e a.rdb b.rdb
+# Output prints all keys of the provided RDB files in order; by default there is no filename prefix
+```
+
 ## License
 
 This project is under the Apache v2 License. See the [LICENSE](LICENSE) file for the full license text.
+
+## Support
+
+If you think this project is useful, you can buy me a coffee:
+
+![WeChat Pay](docs/wechat_pay.jpg)
+
+Note: Please place your WeChat payment QR image at `docs/wechat_pay.png` so that it renders correctly in readers.

@@ -1,5 +1,10 @@
 # RDR: Redis 数据解析工具
 
+> 致谢与说明：本项目基于雪球开源项目 [xueqiu/rdr](https://github.com/xueqiu/rdr) 进行二次开发。感谢原作者与社区的贡献！
+> 在此基础上，我们新增了 `export` 命令（支持导出为 JSON/HTML），并拓展了 `keys` 命令（可输出过期时间、类型与字节大小等信息）。
+
+👉 如果你觉得这个项目还不错，欢迎在 GitHub 上点个 Star 支持一下！
+
 RDR（redis data reveal）是一个用于解析 Redis RDB 文件的工具。相较于 [redis-rdb-tools](https://github.com/sripathikrishnan/redis-rdb-tools)，RDR 由 Go 语言实现，速度更快（在我的机器上，5GB RDB 文件约需 2 分钟）。
 
 ## 从源码构建（Windows / Linux）
@@ -107,6 +112,24 @@ $ ./rdr show -p 8080 *.rdb
 
 ![show example](https://yqfile.alicdn.com/img_9bc93fc3a6b976fdf862c8314e34f454.png)
 
+### dump：将统计信息输出到 STDOUT（JSON 数组）
+
+```text
+NAME:
+   rdr dump - dump statistical information of rdbfile to STDOUT
+
+USAGE:
+   rdr dump FILE1 [FILE2] [FILE3]...
+```
+
+快速示例：
+
+```bash
+$ ./rdr dump a.rdb b.rdb > out/report.json
+```
+
+说明：当有多个 RDB 输入时，输出为一个 JSON 数组；每个元素包括 `LargestKeys`、`LargestKeyPrefixes`、`TypeBytes/TypeNum`、`TotleNum/TotleBytes`、`LenLevelCount`、`SlotBytes/SlotNums` 等字段。
+
 ### export：导出统计信息到本地 JSON 或 HTML
 
 ```text
@@ -119,6 +142,12 @@ USAGE:
 OPTIONS:
    --format value, -f value  export format: json or html (default: "json")
    --out value, -o value     output file path (single input) or directory (multiple inputs)
+```
+
+快速示例：
+
+```bash
+$ ./rdr export -f html -o out/report.html a.rdb b.rdb
 ```
 
 示例与说明：
@@ -158,6 +187,12 @@ NAME:
 
 USAGE:
    rdr keys FILE1 [FILE2] [FILE3]...
+ 
+OPTIONS:
+   --with-expire, -e  当开启时，输出为：
+                      key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>
+                      若没有过期时间，则输出：
+                      key, <type>, <size_in_bytes>,
 ```
 
 示例：
@@ -174,6 +209,33 @@ portfolio:stock_follower:ZH924804
 portfolio:stock_follower_count:INS104806
 ```
 
+开启过期时间输出（同时包含 type 与 size_in_bytes）：
+
+```bash
+# 若 key 有过期时间：
+$ ./rdr keys -e example.rdb | head -1
+EXPRESS_COMPANY_SCORE_TIME:广东省:广州市:花都区:吉林省:四平市, string, 920, 2025-11-27T18:23:50.752000
+
+# 若 key 无过期时间：
+$ ./rdr keys -e example.rdb | head -1
+some:key, string, 1234,
+```
+
+多文件输入：
+
+```bash
+$ ./rdr keys -e a.rdb b.rdb
+# 输出会按传入顺序依次打印两个 RDB 中的所有 key；默认不带来源文件名标识
+```
+
 ## 许可证
 
 本项目使用 Apache v2 许可证。详见 [LICENSE](LICENSE)。
+
+## 赞赏支持
+
+如果觉得这个项目对你有帮助，欢迎请我喝杯咖啡：
+
+![微信收款码](docs/wechat_pay.jpg)
+
+备注：请将您的微信收款码图片保存为 `docs/wechat_pay.png` 以便在阅读器中正确显示。

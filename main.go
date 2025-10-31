@@ -20,6 +20,7 @@ import (
 	"github.com/urfave/cli"
 
 	"fmt"
+	"time"
 
 	"github.com/xueqiu/rdr/decoder"
 	"github.com/xueqiu/rdr/dump"
@@ -36,11 +37,22 @@ func keys(c *cli.Context) {
 		cli.ShowCommandHelp(c, "keys")
 		return
 	}
+	withExpire := c.Bool("with-expire")
 	for _, filepath := range c.Args() {
 		decoder := decoder.NewDecoder()
 		go dump.Decode(c, decoder, filepath)
 		for e := range decoder.Entries {
-			fmt.Fprintf(c.App.Writer, "%v\n", e.Key)
+			if withExpire {
+				if e.ExpireAt > 0 {
+					ts := time.Unix(e.ExpireAt/1000, (e.ExpireAt%1000)*int64(time.Millisecond))
+					formatted := ts.Format("2006-01-02T15:04:05.000000")
+					fmt.Fprintf(c.App.Writer, "%v, %s, %d, %s\n", e.Key, e.Type, e.Bytes, formatted)
+				} else {
+					fmt.Fprintf(c.App.Writer, "%v, %s, %d,\n", e.Key, e.Type, e.Bytes)
+				}
+			} else {
+				fmt.Fprintf(c.App.Writer, "%v\n", e.Key)
+			}
 		}
 	}
 }
@@ -76,6 +88,7 @@ func main() {
 			Name:      "export",
 			Usage:     "export statistical information of rdbfile to local JSON or HTML",
 			ArgsUsage: "FILE1 [FILE2] [FILE3]...",
+			UsageText: "rdr export [--format json|html] --out <file|dir> FILE1 [FILE2] [FILE3]...\n\nExample:\n  ./rdr export -f html -o out/report.html a.rdb b.rdb",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "format, f",
@@ -93,6 +106,13 @@ func main() {
 			Name:      "keys",
 			Usage:     "get all keys from rdbfile",
 			ArgsUsage: "FILE1 [FILE2] [FILE3]...",
+			UsageText: "rdr keys [--with-expire] FILE1 [FILE2] [FILE3]...\n\nExample:\n  ./rdr keys -e a.rdb b.rdb",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "with-expire, e",
+					Usage: "print 'key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>'; if no expiry prints trailing comma after size",
+				},
+			},
 			Action:    keys,
 		},
 	}
