@@ -37,21 +37,35 @@ func keys(c *cli.Context) {
 		cli.ShowCommandHelp(c, "keys")
 		return
 	}
+	// Filtering options:
+	// -e / --with-expire: only output entries that have an expiration time
+	// --no-expire: only output entries that do NOT have an expiration time
+	// If neither is specified, output all entries
 	withExpire := c.Bool("with-expire")
+	noExpire := c.Bool("no-expire")
+	if withExpire && noExpire {
+		fmt.Fprintln(c.App.ErrWriter, "cannot use --with-expire (-e) and --no-expire together")
+		cli.ShowCommandHelp(c, "keys")
+		return
+	}
 	for _, filepath := range c.Args() {
 		decoder := decoder.NewDecoder()
 		go dump.Decode(c, decoder, filepath)
 		for e := range decoder.Entries {
-			if withExpire {
-				if e.ExpireAt > 0 {
-					ts := time.Unix(e.ExpireAt/1000, (e.ExpireAt%1000)*int64(time.Millisecond))
-					formatted := ts.Format("2006-01-02T15:04:05.000000")
-					fmt.Fprintf(c.App.Writer, "%v, %s, %d, %s\n", e.Key, e.Type, e.Bytes, formatted)
-				} else {
-					fmt.Fprintf(c.App.Writer, "%v, %s, %d,\n", e.Key, e.Type, e.Bytes)
-				}
+			// Apply filters
+			if withExpire && e.ExpireAt <= 0 {
+				continue
+			}
+			if noExpire && e.ExpireAt > 0 {
+				continue
+			}
+			// Always output as: key, type, size, expire
+			if e.ExpireAt > 0 {
+				ts := time.Unix(e.ExpireAt/1000, (e.ExpireAt%1000)*int64(time.Millisecond))
+				formatted := ts.Format("2006-01-02T15:04:05.000000")
+				fmt.Fprintf(c.App.Writer, "%v, %s, %d, %s\n", e.Key, e.Type, e.Bytes, formatted)
 			} else {
-				fmt.Fprintf(c.App.Writer, "%v\n", e.Key)
+				fmt.Fprintf(c.App.Writer, "%v, %s, %d,\n", e.Key, e.Type, e.Bytes)
 			}
 		}
 	}
@@ -106,11 +120,20 @@ func main() {
 			Name:      "keys",
 			Usage:     "get all keys from rdbfile",
 			ArgsUsage: "FILE1 [FILE2] [FILE3]...",
-			UsageText: "rdr keys [--with-expire] FILE1 [FILE2] [FILE3]...\n\nExample:\n  ./rdr keys -e a.rdb b.rdb",
+			UsageText: "rdr keys [--with-expire|-e | --no-expire] FILE1 [FILE2] [FILE3]...\n\n" +
+				"Examples:\n" +
+				"  ./rdr keys a.rdb\n" +
+				"  ./rdr keys -e a.rdb b.rdb   # only entries with expire\n" +
+				"  ./rdr keys --no-expire a.rdb # only entries without expire\n\n" +
+				"Output format: 'key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>'; if no expiry prints trailing comma after size",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "with-expire, e",
-					Usage: "print 'key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>'; if no expiry prints trailing comma after size",
+					Usage: "only output entries with expiry; always print as 'key, <type>, <size_in_bytes>, <expiry>'; if no expiry prints trailing comma after size",
+				},
+				cli.BoolFlag{
+					Name:  "no-expire",
+					Usage: "only output entries without expiry; always print as 'key, <type>, <size_in_bytes>,', keeping the trailing comma",
 				},
 			},
 			Action:    keys,

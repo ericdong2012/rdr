@@ -189,43 +189,45 @@ USAGE:
    rdr keys FILE1 [FILE2] [FILE3]...
  
 OPTIONS:
-   --with-expire, -e  当开启时，输出为：
-                      key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>
-                      若没有过期时间，则输出：
-                      key, <type>, <size_in_bytes>,
+   --with-expire, -e  仅输出有过期时间的键
+   --no-expire        仅输出没有过期时间的键
+
+默认（无过滤参数）输出全部键。
+输出格式始终为 CSV：
+  key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>
+当没有过期时间时，依然保留末尾逗号：
+  key, <type>, <size_in_bytes>,
 ```
 
 示例：
 
 ```bash
-$ ./rdr keys example.rdb
-portfolio:stock_follower_count:ZH314136
-portfolio:stock_follower_count:ZH654106
-portfolio:stock_follower:ZH617824
-portfolio:stock_follower_count:ZH001019
-portfolio:stock_follower_count:ZH346349
-portfolio:stock_follower_count:ZH951803
-portfolio:stock_follower:ZH924804
-portfolio:stock_follower_count:INS104806
+# 1) 默认输出（同时包含有过期与无过期），CSV 格式
+$ ./rdr keys example.rdb | head -3
+some:key, string, 1234,
+another:key, hash, 2048, 2025-11-27T18:23:50.752000
+set:key, set, 512,
 ```
 
-开启过期时间输出（同时包含 type 与 size_in_bytes）：
+仅输出带过期时间：
 
 ```bash
-# 若 key 有过期时间：
 $ ./rdr keys -e example.rdb | head -1
 EXPRESS_COMPANY_SCORE_TIME:广东省:广州市:花都区:吉林省:四平市, string, 920, 2025-11-27T18:23:50.752000
+```
 
-# 若 key 无过期时间：
-$ ./rdr keys -e example.rdb | head -1
+仅输出不带过期时间：
+
+```bash
+$ ./rdr keys --no-expire example.rdb | head -1
 some:key, string, 1234,
 ```
 
 多文件输入：
 
 ```bash
-$ ./rdr keys -e a.rdb b.rdb
-# 输出会按传入顺序依次打印两个 RDB 中的所有 key；默认不带来源文件名标识
+$ ./rdr keys a.rdb b.rdb
+# 输出会按传入顺序依次打印两个 RDB 中的所有条目；默认不带来源文件名标识
 ```
 
 ## 许可证

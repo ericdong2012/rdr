@@ -189,49 +189,50 @@ USAGE:
    rdr keys FILE1 [FILE2] [FILE3]...
 
 OPTIONS:
-   --with-expire, -e  When enabled, each line prints:
-                      key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>
-                      If there is no expiry, it prints:
-                      key, <type>, <size_in_bytes>,
+   --with-expire, -e  Only output entries that have an expiry
+   --no-expire        Only output entries that do NOT have an expiry
+                      
+Default (no filter flag): output ALL entries.
+Output format is always:
+  key, <type>, <size_in_bytes>, <expiry(2006-01-02T15:04:05.000000)>
+If there is no expiry, it prints the trailing comma after size:
+  key, <type>, <size_in_bytes>,
 ```
 
-Quick example:
+Quick examples:
 
 ```bash
+# 1) Output all entries (both with and without expiry), CSV format
+$ ./rdr keys a.rdb
+
+# 2) Only entries with expiry
 $ ./rdr keys -e a.rdb b.rdb
+
+# 3) Only entries without expiry
+$ ./rdr keys --no-expire a.rdb
 ```
 
-Example:
+Example (default output):
 
 ```bash
-$ ./rdr keys example.rdb
-portfolio:stock_follower_count:ZH314136
-portfolio:stock_follower_count:ZH654106
-portfolio:stock_follower:ZH617824
-portfolio:stock_follower_count:ZH001019
-portfolio:stock_follower_count:ZH346349
-portfolio:stock_follower_count:ZH951803
-portfolio:stock_follower:ZH924804
-portfolio:stock_follower_count:INS104806
+$ ./rdr keys example.rdb | head -3
+some:key, string, 1234,
+another:key, hash, 2048, 2025-11-27T18:23:50.752000
+set:key, set, 512,
 ```
 
-With expiry output enabled (and including type and size_in_bytes):
+With filter "only with expiry":
 
 ```bash
-# When the key has an expiry:
 $ ./rdr keys -e example.rdb | head -1
 EXPRESS_COMPANY_SCORE_TIME:Guangdong:Guangzhou:Huadu:Jilin:Siping, string, 920, 2025-11-27T18:23:50.752000
-
-# When the key has no expiry:
-$ ./rdr keys -e example.rdb | head -1
-some:key, string, 1234,
 ```
 
 Multiple inputs:
 
 ```bash
-$ ./rdr keys -e a.rdb b.rdb
-# Output prints all keys of the provided RDB files in order; by default there is no filename prefix
+$ ./rdr keys a.rdb b.rdb
+# Output prints all entries of the provided RDB files in order; by default there is no filename prefix
 ```
 
 ## License
